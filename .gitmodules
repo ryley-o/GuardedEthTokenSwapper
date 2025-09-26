@@ -1,0 +1,3 @@
+[submodule "GuardedEthTokenSwapper/lib/forge-std"]
+	path = GuardedEthTokenSwapper/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
