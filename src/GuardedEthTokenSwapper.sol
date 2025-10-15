@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+
 // --- Chainlink Aggregator ---
 interface AggregatorV3Interface {
     function latestRoundData()
@@ -41,15 +44,15 @@ library SafeTransfer {
     A curated list of tokens and their Chainlink oracles may be configured by the contract owner.
     THE OWNER OF THIS CONTRACT IS NOT LIABLE FOR ANY LOSS OF FUNDS OR DAMAGES ARISING FROM THE USE OF THIS CONTRACT.
  */
-contract GuardedEthTokenSwapper {
+contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
     using SafeTransfer for address;
 
     // Mainnet constants
     address public constant UNISWAP_V3_ROUTER = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
     address public constant WETH9_ADDR        = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-
-    address public immutable owner;
-    modifier onlyOwner() { require(msg.sender == owner, "not owner"); _; }
+    
+    // Oracle staleness threshold (24 hours)
+    uint256 public constant MAX_ORACLE_STALENESS = 24 hours;
 
     AggregatorV3Interface public immutable ethUsdFeed; // e.g. mainnet ETH/USD
     ISwapRouter public immutable router = ISwapRouter(UNISWAP_V3_ROUTER);
@@ -81,14 +84,14 @@ contract GuardedEthTokenSwapper {
     error FeedNotSet();
     error FeeNotSet();
     error OracleBad();
+    error OracleStale();
     error ApproveFailed();
     error TransferFailed();
 
     event FeedSet(address indexed token, address indexed aggregator, QuoteType quote, uint8 decimals, uint24 feeTier, uint16 toleranceBps);
     event Swapped(address indexed user, address indexed token, uint256 ethIn, uint256 tokensOut, uint24 fee, uint256 minOut);
 
-    constructor(address _ethUsdFeed) {
-        owner = msg.sender;
+    constructor(address _ethUsdFeed) Ownable(msg.sender) {
         ethUsdFeed = AggregatorV3Interface(_ethUsdFeed);
 
         // Optional: a few defaults with toleranceBps (tune as you like)
@@ -139,22 +142,24 @@ contract GuardedEthTokenSwapper {
     function swapEthForTokenWithRegistry(
         address token,
         uint16  slippageBps
-    ) external payable returns (uint256 amountOut) {
+    ) external payable nonReentrant returns (uint256 amountOut) {
         if (msg.value == 0) revert NoEthSent();
 
         FeedInfo memory f = feeds[token];
         if (f.aggregator == address(0)) revert FeedNotSet();
         if (f.feeTier == 0) revert FeeNotSet();
 
-        // 1) Read prices (no staleness check by design)
-        (, int256 tokAns,,,) = AggregatorV3Interface(f.aggregator).latestRoundData();
+        // 1) Read prices with staleness check
+        (, int256 tokAns,, uint256 tokUpdatedAt,) = AggregatorV3Interface(f.aggregator).latestRoundData();
         if (tokAns <= 0) revert OracleBad();
+        if (block.timestamp - tokUpdatedAt > MAX_ORACLE_STALENESS) revert OracleStale();
         uint256 tokPrice = uint256(tokAns);
 
         uint256 ethUsd = 0;
         if (QuoteType(f.quoteType) == QuoteType.USD) {
-            (, int256 eAns,,,) = ethUsdFeed.latestRoundData();
+            (, int256 eAns,, uint256 ethUpdatedAt,) = ethUsdFeed.latestRoundData();
             if (eAns <= 0) revert OracleBad();
+            if (block.timestamp - ethUpdatedAt > MAX_ORACLE_STALENESS) revert OracleStale();
             ethUsd = uint256(eAns);
         }
 
@@ -197,7 +202,7 @@ contract GuardedEthTokenSwapper {
         amountOut = router.exactInputSingle(p);
 
         // 5) Send tokens to caller
-        if (!token.transfer(msg.sender, amountOut)) revert TransferFailed();
+        if (!SafeTransfer.transfer(token, msg.sender, amountOut)) revert TransferFailed();
 
         emit Swapped(msg.sender, token, msg.value, amountOut, f.feeTier, minOut);
     }
