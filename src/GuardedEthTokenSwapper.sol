@@ -85,11 +85,13 @@ contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
     error FeeNotSet();
     error OracleBad();
     error OracleStale();
+    error InvalidSlippage();
     error ApproveFailed();
     error TransferFailed();
 
     event FeedSet(address indexed token, address indexed aggregator, QuoteType quote, uint8 decimals, uint24 feeTier, uint16 toleranceBps);
-    event Swapped(address indexed user, address indexed token, uint256 ethIn, uint256 tokensOut, uint24 fee, uint256 minOut);
+    event FeedRemoved(address indexed token);
+    event Swapped(address indexed user, address indexed token, uint256 ethIn, uint256 tokensOut, uint24 fee, uint256 minOut, uint256 tokenOraclePrice, uint256 ethUsdPrice);
 
     constructor(address _ethUsdFeed) Ownable(msg.sender) {
         ethUsdFeed = AggregatorV3Interface(_ethUsdFeed);
@@ -133,17 +135,28 @@ contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
         emit FeedSet(token, aggregator, quote, dec, feeTier, toleranceBps);
     }
 
+    // --- Admin: remove feed ---
+    function removeFeed(address token) external onlyOwner {
+        require(feeds[token].aggregator != address(0), "feed not set");
+        delete feeds[token];
+        emit FeedRemoved(token);
+    }
+
     // --- Atomic swap during mint ---
     /**
      * @param token          ERC20 to buy (must be in registry).
      * @param slippageBps    Runtime slippage buffer (e.g., 200 = 2%).
+     * @param deadline       Unix timestamp after which the transaction will revert.
      * @return amountOut     Tokens transferred to msg.sender.
      */
     function swapEthForTokenWithRegistry(
         address token,
-        uint16  slippageBps
+        uint16  slippageBps,
+        uint256 deadline
     ) external payable nonReentrant returns (uint256 amountOut) {
         if (msg.value == 0) revert NoEthSent();
+        if (slippageBps > 10000) revert InvalidSlippage(); // Max 100%
+        if (deadline < block.timestamp) revert("deadline expired");
 
         FeedInfo memory f = feeds[token];
         if (f.aggregator == address(0)) revert FeedNotSet();
@@ -163,21 +176,25 @@ contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
             ethUsd = uint256(eAns);
         }
 
-        // 2) Compute expected tokens in token decimals
-        uint8 tokenDec = IERC20(token).decimals();
+        // 2) Compute expected tokens in token decimals (optimized for precision)
         uint256 expectedTokens;
-
-        if (QuoteType(f.quoteType) == QuoteType.USD) {
-            uint8 ethDec = ethUsdFeed.decimals();
-            uint256 ethUsd1e18 = ethUsd * 1e18 / (10 ** ethDec);
-            uint256 tokUsd1e18 = tokPrice * 1e18 / (10 ** f.decimalsCache);
-            uint256 tokensPerEth_tokenDec = (ethUsd1e18 * (10 ** tokenDec)) / tokUsd1e18;
-            expectedTokens = (msg.value * tokensPerEth_tokenDec) / 1e18;
-        } else {
-            // TOKEN/ETH: tokenEth = tokPrice * 10^d (d = f.decimalsCache)
-            // expected = msg.value * 10^(tokenDec + d) / (1e18 * tokenEth)
-            uint256 num = msg.value * (10 ** (tokenDec + f.decimalsCache));
-            expectedTokens = num / (1e18 * tokPrice);
+        {
+            uint8 tokenDec = IERC20(token).decimals();
+            if (QuoteType(f.quoteType) == QuoteType.USD) {
+                uint8 ethDec = ethUsdFeed.decimals();
+                // Use higher precision intermediate calculations (1e27 for safety)
+                // This provides 9 extra decimal places while avoiding overflow risk
+                uint256 ethUsdScaled = ethUsd * 1e27 / (10 ** ethDec);  // ETH price in USD with 1e27 precision
+                uint256 tokUsdScaled = tokPrice * 1e27 / (10 ** f.decimalsCache); // Token price in USD with 1e27 precision
+                // tokensPerEth = ethUsdScaled / tokUsdScaled (still 1e27 precision)
+                uint256 tokensPerEthScaled = ethUsdScaled * (10 ** tokenDec) / tokUsdScaled;
+                expectedTokens = (msg.value * tokensPerEthScaled) / (1e18 * 1e27); // Scale back down
+            } else {
+                // TOKEN/ETH: Use higher precision to avoid early division
+                // Scale up numerator before division to maintain precision  
+                uint256 scaledNumerator = msg.value * (10 ** (tokenDec + f.decimalsCache)) * 1e9; // Use 1e9 instead of 1e18 for safety
+                expectedTokens = scaledNumerator / (1e18 * 1e9 * tokPrice);
+            }
         }
 
         // 3) Conservative minOut using both user slippage and feed tolerance
@@ -194,7 +211,7 @@ contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
             tokenOut: token,
             fee:      f.feeTier,
             recipient: address(this),
-            deadline: block.timestamp + 900,
+            deadline: deadline,
             amountIn: msg.value,
             amountOutMinimum: minOut,
             sqrtPriceLimitX96: 0
@@ -204,7 +221,7 @@ contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
         // 5) Send tokens to caller
         if (!SafeTransfer.transfer(token, msg.sender, amountOut)) revert TransferFailed();
 
-        emit Swapped(msg.sender, token, msg.value, amountOut, f.feeTier, minOut);
+        emit Swapped(msg.sender, token, msg.value, amountOut, f.feeTier, minOut, tokPrice, ethUsd);
     }
 
     // Views
