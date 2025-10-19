@@ -32,17 +32,12 @@ library SafeTransfer {
 }
 
 /**
-    @title GuardedEthTokenSwapper
+    @title GuardedEthTokenSwapperETH
     @author ryley-o
-    @notice This contract is a guarded eth token swapper that allows users to swap eth for tokens in
-    uniswap v3 pools.
+    @notice Simplified ETH-only token swapper that uses TOKEN/ETH Chainlink price feeds.
+    This version is optimized for ETH pairs only, removing USD complexity and reducing gas costs.
     USE AT YOUR OWN RISK. DO NOT USE THIS CONTRACT IF YOU DO NOT UNDERSTAND THE RISKS.
-    It is guarded by checking the price of the token against a Chainlink oracle and ensuring the swap
-    is within a certain tolerance. If the token price is not within the tolerance, the swap will revert.
-    This is useful for users who want to swap eth for tokens but have no knowledge of the token price,
-    and want to help guard against sever sandwich attacks or other forms of price manipulation.
-    A curated list of tokens and their Chainlink oracles may be configured by the contract owner.
-    THE OWNER OF THIS CONTRACT IS NOT LIABLE FOR ANY LOSS OF FUNDS OR DAMAGES ARISING FROM THE USE OF THIS CONTRACT.
+    It guards against severe sandwich attacks by checking TOKEN/ETH prices from Chainlink oracles.
  */
 contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
     using SafeTransfer for address;
@@ -54,28 +49,23 @@ contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
     // Oracle staleness threshold (24 hours)
     uint256 public constant MAX_ORACLE_STALENESS = 24 hours;
 
-    AggregatorV3Interface public immutable ethUsdFeed; // e.g. mainnet ETH/USD
     ISwapRouter public immutable router = ISwapRouter(UNISWAP_V3_ROUTER);
     IWETH9 public immutable weth   = IWETH9(WETH9_ADDR);
 
-    enum QuoteType { USD, ETH } // TOKEN/USD or TOKEN/ETH
-
     /**
-     * Packed per-token registry entry (single storage slot):
-     * - aggregator      : 20 bytes
-     * - quoteType       : 1 byte  (QuoteType)
+     * Simplified per-token registry entry (fits in 1 storage slot):
+     * - aggregator      : 20 bytes (TOKEN/ETH Chainlink feed)
      * - decimalsCache   : 1 byte  (aggregator.decimals())
      * - feeTier         : 3 bytes (Uniswap v3 fee: 500, 3000, 10000)
      * - toleranceBps    : 2 bytes (oracle ±accuracy in basis points, e.g. 200 = 2%)
-     * Total: 27 bytes (fits in 1 slot)
+     * Total: 26 bytes (fits in 1 slot with 6 bytes padding)
      */
     struct FeedInfo {
-        address aggregator;   // 20
-        uint8   quoteType;    // 1
-        uint8   decimalsCache;// 1
-        uint24  feeTier;      // 3
-        uint16  toleranceBps; // 2
-        // 5 bytes padding
+        address aggregator;   // 20 bytes - TOKEN/ETH price feed
+        uint8   decimalsCache;// 1 byte  - cached decimals from aggregator
+        uint24  feeTier;      // 3 bytes - Uniswap V3 fee tier
+        uint16  toleranceBps; // 2 bytes - price tolerance in basis points
+        // 6 bytes padding
     }
     mapping(address => FeedInfo) public feeds; // token => config
 
@@ -89,50 +79,41 @@ contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
     error ApproveFailed();
     error TransferFailed();
 
-    event FeedSet(address indexed token, address indexed aggregator, QuoteType quote, uint8 decimals, uint24 feeTier, uint16 toleranceBps);
+    event FeedSet(address indexed token, address indexed aggregator, uint8 decimals, uint24 feeTier, uint16 toleranceBps);
     event FeedRemoved(address indexed token);
-    event Swapped(address indexed user, address indexed token, uint256 ethIn, uint256 tokensOut, uint24 fee, uint256 minOut, uint256 tokenOraclePrice, uint256 ethUsdPrice);
+    event Swapped(address indexed user, address indexed token, uint256 ethIn, uint256 tokensOut, uint24 fee, uint256 minOut, uint256 tokenEthPrice);
 
-    constructor(address _ethUsdFeed) Ownable(msg.sender) {
-        ethUsdFeed = AggregatorV3Interface(_ethUsdFeed);
-
-        // Optional: a few defaults with toleranceBps (tune as you like)
-        // _setFeed( // LINK/USD @ 0.30% fee, tolerance 50 bps
-        //     0x514910771AF9Ca656af840dff83E8264EcF986CA,
-        //     0x2c1d072e956aFfC0D435Cb7AC38EF18d24d9127c,
-        //     QuoteType.USD, 3000, 50
-        // );
+    constructor() Ownable(msg.sender) {
+        // No ETH/USD feed needed - we only use TOKEN/ETH feeds
     }
 
-    // --- Admin: set/update entries (token, aggregator, quoteType, feeTier, toleranceBps) ---
+    // --- Admin: set/update entries (token, aggregator, feeTier, toleranceBps) ---
     function setFeeds(
         address[] calldata tokens,
         address[] calldata aggregators,
-        QuoteType[] calldata quotes,
         uint24[]  calldata feeTiers,
         uint16[]  calldata toleranceBpsArr
     ) external onlyOwner {
         uint256 n = tokens.length;
-        require(n == aggregators.length && n == quotes.length && n == feeTiers.length && n == toleranceBpsArr.length, "len mismatch");
+        require(n == aggregators.length && n == feeTiers.length && n == toleranceBpsArr.length, "len mismatch");
         for (uint256 i; i < n; ++i) {
-            _setFeed(tokens[i], aggregators[i], quotes[i], feeTiers[i], toleranceBpsArr[i]);
+            _setFeed(tokens[i], aggregators[i], feeTiers[i], toleranceBpsArr[i]);
         }
     }
 
-    function _setFeed(address token, address aggregator, QuoteType quote, uint24 feeTier, uint16 toleranceBps) internal {
+    function _setFeed(address token, address aggregator, uint24 feeTier, uint16 toleranceBps) internal {
         require(token != address(0) && aggregator != address(0), "zero addr");
         require(feeTier == 500 || feeTier == 3000 || feeTier == 10000, "bad fee");
-        // Simple sanity cap; keep combined buffers reasonable
         require(toleranceBps <= 2000, "tolerance too high"); // <=20%
+        
         uint8 dec = AggregatorV3Interface(aggregator).decimals();
         feeds[token] = FeedInfo({
             aggregator: aggregator,
-            quoteType:  uint8(quote),
             decimalsCache: dec,
-            feeTier:    feeTier,
+            feeTier: feeTier,
             toleranceBps: toleranceBps
         });
-        emit FeedSet(token, aggregator, quote, dec, feeTier, toleranceBps);
+        emit FeedSet(token, aggregator, dec, feeTier, toleranceBps);
     }
 
     // --- Admin: remove feed ---
@@ -142,14 +123,14 @@ contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
         emit FeedRemoved(token);
     }
 
-    // --- Atomic swap during mint ---
+    // --- Simplified ETH-only swap ---
     /**
-     * @param token          ERC20 to buy (must be in registry).
+     * @param token          ERC20 to buy (must have TOKEN/ETH feed configured).
      * @param slippageBps    Runtime slippage buffer (e.g., 200 = 2%).
      * @param deadline       Unix timestamp after which the transaction will revert.
      * @return amountOut     Tokens transferred to msg.sender.
      */
-    function swapEthForTokenWithRegistry(
+    function swapEthForToken(
         address token,
         uint16  slippageBps,
         uint256 deadline
@@ -162,47 +143,31 @@ contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
         if (f.aggregator == address(0)) revert FeedNotSet();
         if (f.feeTier == 0) revert FeeNotSet();
 
-        // 1) Read prices with staleness check
-        (, int256 tokAns,, uint256 tokUpdatedAt,) = AggregatorV3Interface(f.aggregator).latestRoundData();
-        if (tokAns <= 0) revert OracleBad();
+        // 1) Read TOKEN/ETH price with staleness check
+        (, int256 tokEthAns,, uint256 tokUpdatedAt,) = AggregatorV3Interface(f.aggregator).latestRoundData();
+        if (tokEthAns <= 0) revert OracleBad();
         if (block.timestamp - tokUpdatedAt > MAX_ORACLE_STALENESS) revert OracleStale();
-        uint256 tokPrice = uint256(tokAns);
+        uint256 tokEthPrice = uint256(tokEthAns);
 
-        uint256 ethUsd = 0;
-        if (QuoteType(f.quoteType) == QuoteType.USD) {
-            (, int256 eAns,, uint256 ethUpdatedAt,) = ethUsdFeed.latestRoundData();
-            if (eAns <= 0) revert OracleBad();
-            if (block.timestamp - ethUpdatedAt > MAX_ORACLE_STALENESS) revert OracleStale();
-            ethUsd = uint256(eAns);
-        }
-
-        // 2) Compute expected tokens in token decimals (optimized for precision)
+        // 2) Compute expected tokens - much simpler calculation!
         uint256 expectedTokens;
         {
             uint8 tokenDec = IERC20(token).decimals();
-            if (QuoteType(f.quoteType) == QuoteType.USD) {
-                uint8 ethDec = ethUsdFeed.decimals();
-                // Use higher precision intermediate calculations (1e27 for safety)
-                // This provides 9 extra decimal places while avoiding overflow risk
-                uint256 ethUsdScaled = ethUsd * 1e27 / (10 ** ethDec);  // ETH price in USD with 1e27 precision
-                uint256 tokUsdScaled = tokPrice * 1e27 / (10 ** f.decimalsCache); // Token price in USD with 1e27 precision
-                // tokensPerEth = ethUsdScaled / tokUsdScaled (still 1e27 precision)
-                uint256 tokensPerEthScaled = ethUsdScaled * (10 ** tokenDec) / tokUsdScaled;
-                expectedTokens = (msg.value * tokensPerEthScaled) / (1e18 * 1e27); // Scale back down
-            } else {
-                // TOKEN/ETH: Use higher precision to avoid early division
-                // Scale up numerator before division to maintain precision  
-                uint256 scaledNumerator = msg.value * (10 ** (tokenDec + f.decimalsCache)) * 1e9; // Use 1e9 instead of 1e18 for safety
-                expectedTokens = scaledNumerator / (1e18 * 1e9 * tokPrice);
-            }
+            // TOKEN/ETH price means: tokEthPrice * 10^decimalsCache = tokens per 1 ETH
+            // For msg.value ETH: expectedTokens = msg.value * tokEthPrice * 10^tokenDec / (1e18 * 10^decimalsCache)
+            // Simplified: expectedTokens = msg.value * tokEthPrice * 10^tokenDec / (1e18 * 10^decimalsCache)
+            
+            // Use precision scaling to avoid early division
+            uint256 scaledNumerator = msg.value * tokEthPrice * (10 ** tokenDec);
+            expectedTokens = scaledNumerator / (1e18 * (10 ** f.decimalsCache));
         }
 
         // 3) Conservative minOut using both user slippage and feed tolerance
         uint256 totalBps = uint256(slippageBps) + uint256(f.toleranceBps);
-        if (totalBps > 10_000) totalBps = 10_000; // clamp (won't underflow in next line)
+        if (totalBps > 10_000) totalBps = 10_000; // clamp
         uint256 minOut = expectedTokens * (10_000 - totalBps) / 10_000;
 
-        // 4) Wrap ETH, approve, swap (reverts if < minOut)
+        // 4) Wrap ETH, approve, swap
         weth.deposit{value: msg.value}();
         if (!weth.approve(UNISWAP_V3_ROUTER, msg.value)) revert ApproveFailed();
 
@@ -221,13 +186,13 @@ contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
         // 5) Send tokens to caller
         if (!SafeTransfer.transfer(token, msg.sender, amountOut)) revert TransferFailed();
 
-        emit Swapped(msg.sender, token, msg.value, amountOut, f.feeTier, minOut, tokPrice, ethUsd);
+        emit Swapped(msg.sender, token, msg.value, amountOut, f.feeTier, minOut, tokEthPrice);
     }
 
     // Views
-    function getFeed(address token) external view returns (address aggregator, QuoteType quote, uint8 decimals, uint24 feeTier, uint16 toleranceBps) {
+    function getFeed(address token) external view returns (address aggregator, uint8 decimals, uint24 feeTier, uint16 toleranceBps) {
         FeedInfo memory x = feeds[token];
-        return (x.aggregator, QuoteType(x.quoteType), x.decimalsCache, x.feeTier, x.toleranceBps);
+        return (x.aggregator, x.decimalsCache, x.feeTier, x.toleranceBps);
     }
 
     receive() external payable { revert(); }

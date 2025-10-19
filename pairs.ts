@@ -1,0 +1,1 @@
+export const pairs = ["1INCH/ETH", "AAVE/ETH", "APE/ETH", "BAL/ETH", "BAT/ETH", "BTC/ETH", "COMP/ETH", "CRV/ETH", "FIL/ETH", "USDT/ETH", "LDO/ETH", "LINK/ETH", "LRC/ETH", "MKR/ETH", "SHIB/ETH", "SUSHI/ETH", "UNI/ETH", "ZRX/ETH"];
