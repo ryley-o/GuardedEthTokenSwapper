@@ -1,5 +1,15 @@
 # GuardedEthTokenSwapper Testing Guide
 
+## 🌐 Mainnet Deployment
+
+**The contract is deployed and verified on Ethereum mainnet:**
+- **Address:** [`0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0`](https://etherscan.io/address/0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0)
+- **Status:** Production-ready, fully configured with 14 tokens
+- **Verification:** Source code verified on Etherscan
+- **Testing:** Continuous mainnet integration testing
+
+---
+
 ## Overview
 
 This guide explains how to run comprehensive tests for the GuardedEthTokenSwapper contract (ETH-only version), including fork testing against mainnet Ethereum.
@@ -48,7 +58,7 @@ ETH_RPC_URL="https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY" ./test_fork.sh
 
 ### Testing Strategy
 
-**Three testing modes available:**
+**Four testing modes available:**
 
 1. **Quick Tests (`./test_quick.sh`)**
    - No RPC connection needed
@@ -67,6 +77,13 @@ ETH_RPC_URL="https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY" ./test_fork.sh
    - Tests current market conditions
    - May fail if liquidity shifts
    - Best for: Ongoing monitoring and updates
+
+4. **Mainnet Integration Tests (`./test_mainnet.sh`)** ⭐ NEW
+   - Tests the DEPLOYED contract at `0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0`
+   - Validates admin configuration
+   - Tests real oracle feeds on mainnet
+   - Executes actual swaps against deployed contract
+   - Best for: Production monitoring and validation
 
 ### Basic Tests (No Fork Required)
 

@@ -10,6 +10,18 @@ GuardedEthTokenSwapper is an ETH-only token swapper that protects against sandwi
 
 **⚠️ USE AT YOUR OWN RISK. DO NOT USE THIS CONTRACT IF YOU DO NOT UNDERSTAND THE RISKS.**
 
+## 🌐 Mainnet Deployment
+
+**The contract is deployed and production-ready on Ethereum mainnet:**
+
+- **Contract Address:** [`0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0`](https://etherscan.io/address/0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0)
+- **Network:** Ethereum Mainnet (Chain ID: 1)
+- **Status:** ✅ Verified source code on Etherscan
+- **Tokens:** 14 pre-configured with optimal fee tiers
+- **Testing:** Continuous mainnet integration testing via CI
+
+**View on Etherscan:** [Contract Source & Interactions](https://etherscan.io/address/0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0#code)
+
 ## Features
 
 - **ETH-Only Focus**: Simplified design using only TOKEN/ETH Chainlink price feeds
@@ -86,43 +98,49 @@ forge build
 # Latest fork testing - Uses current mainnet block
 ./test_fork_latest.sh
 
-# Or set your own RPC URL
-ETH_RPC_URL="https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY" ./test_fork.sh
-
-# Manual testing (validated block)
-forge test --fork-url https://ethereum-rpc.publicnode.com --fork-block-number 23620206
-
-# Manual testing (latest block)
-forge test --fork-url $ETH_RPC_URL --fork-block-number $(cast block-number --rpc-url $ETH_RPC_URL)
+# Mainnet integration testing - Tests the DEPLOYED contract
+./test_mainnet.sh
 ```
 
-**When to use each:**
-- `test_quick.sh` - Fast development testing (no fork, no RPC needed)
-- `test_fork.sh` - Validation against known-good state (block 23620206)
-- `test_fork_latest.sh` - Test current mainnet compatibility
+**Four testing modes:**
+1. `./test_quick.sh` - Fast development testing (no fork, no RPC needed)
+2. `./test_fork.sh` - Validation against known-good state (block 23620206)
+3. `./test_fork_latest.sh` - Test current mainnet compatibility
+4. `./test_mainnet.sh` ⭐ - **Test the deployed contract at `0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0`**
+
+**Mainnet Integration Tests:**
+The mainnet integration tests validate the actual deployed contract:
+- ✅ Verifies all 14 tokens are properly configured
+- ✅ Tests Chainlink oracle feeds on live mainnet
+- ✅ Executes real swaps against the deployed contract
+- ✅ Runs automatically in CI on the `main` branch
 
 ### Deploy
 
-**See [DEPLOYMENT.md](DEPLOYMENT.md) for comprehensive deployment guide.**
+**✅ The contract is already deployed to mainnet at [`0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0`](https://etherscan.io/address/0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0).**
 
-Quick start:
+For deploying your own instance, see [DEPLOYMENT.md](DEPLOYMENT.md) for the comprehensive guide.
+
+Quick start for custom deployment:
 
 ```bash
 # 1. Configure environment variables
 cp .env.example .env
-# Edit .env with your values (see .env.example for details)
+# Edit .env with your values
 
 # 2. Deploy
 ./deploy.sh
+
+# 3. Verify (if not auto-verified)
+./verify.sh <CONTRACT_ADDRESS>
 ```
 
 The deployment script will:
 - Deploy the GuardedEthTokenSwapper contract
 - Configure all 14 production-ready token pairs
 - Automatically verify on Etherscan (if API key provided)
-- Provide clear confirmation prompts and status updates
 
-**⚠️ Read DEPLOYMENT.md for security best practices and detailed instructions.**
+**Note:** The main deployment is production-ready with all 14 tokens configured.
 
 ## Configuration
 

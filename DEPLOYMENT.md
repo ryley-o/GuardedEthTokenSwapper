@@ -1,6 +1,29 @@
 # GuardedEthTokenSwapper Deployment Guide
 
-This guide walks you through deploying the GuardedEthTokenSwapper contract to Ethereum mainnet.
+## 🌐 Production Deployment
+
+**The GuardedEthTokenSwapper is already deployed and production-ready on Ethereum mainnet:**
+
+- **Contract Address:** [`0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0`](https://etherscan.io/address/0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0)
+- **Network:** Ethereum Mainnet (Chain ID: 1)
+- **Deployment Block:** 23621778
+- **Owner:** `0x99E5B0c5ffae6e177848d8FDe593B539A35Be56D`
+- **Status:** ✅ Verified and fully configured
+
+**Configured Tokens (14):**
+- High Liquidity (0.05%): USDT, WBTC
+- Standard (0.30%): AAVE, APE, BAT, COMP, CRV, LDO, LINK, MKR, UNI, ZRX
+- Higher Fee (1.00%): 1INCH, SHIB
+
+**View on Etherscan:** [Contract Source Code](https://etherscan.io/address/0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0#code)
+
+**Mainnet Integration Tests:** Run `./test_mainnet.sh` to validate the deployed contract.
+
+---
+
+## Deploying Your Own Instance
+
+This guide walks you through deploying your own instance of the GuardedEthTokenSwapper contract to Ethereum mainnet.
 
 ## ⚠️ Important Security Notice
 

@@ -41,7 +41,7 @@ jobs:
 
       - name: Run Forge tests (without fork)
         run: |
-          forge test -vvv
+          forge test --no-match-contract "GuardedEthTokenSwapperMainnetTest" -vvv
         id: test
 
       - name: Generate gas report
@@ -88,10 +88,37 @@ jobs:
         id: liquidity-test
         continue-on-error: true
 
+      - name: Run Mainnet Integration Tests
+        run: |
+          forge test \
+            --match-contract "GuardedEthTokenSwapperMainnetTest" \
+            -vv
+        id: mainnet-tests
+        continue-on-error: true
+
       - name: Fork Tests Summary
         if: always()
         run: |
           echo "## Fork Test Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Fork tests may fail due to public RPC rate limits." >> $GITHUB_STEP_SUMMARY
+          echo "### Validated Fork Tests (Block 23620206)" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.oracle-validation.outcome }}" == "success" ]; then
+            echo "✅ Oracle validation passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Oracle validation had issues" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ steps.liquidity-validation.outcome }}" == "success" ]; then
+            echo "✅ Liquidity validation passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Liquidity validation had issues" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Mainnet Integration Tests (Current Block)" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.mainnet-tests.outcome }}" == "success" ]; then
+            echo "✅ Mainnet integration tests passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Mainnet integration tests had issues" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Note:** Fork tests may fail due to public RPC rate limits." >> $GITHUB_STEP_SUMMARY
           echo "For reliable fork testing, run locally with: \`./test_fork.sh\`" >> $GITHUB_STEP_SUMMARY
