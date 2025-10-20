@@ -22,7 +22,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly-828441d243f552f82c5a89bdc818e52bdd57b26b
+          version: v1.4.2
 
       - name: Show Forge version
         run: |
@@ -63,7 +63,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly-828441d243f552f82c5a89bdc818e52bdd57b26b
+          version: v1.4.2
 
       - name: Run Fork Tests - Oracle Validation
         run: |

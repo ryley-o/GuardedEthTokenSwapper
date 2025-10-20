@@ -49,7 +49,21 @@ ETH Input → Chainlink Price Check → Uniswap V3 Swap → Token Output
 
 ### Setup
 
-Install the pre-commit hook for automatic formatting:
+**1. Install Foundry:**
+
+This project uses Foundry v1.4.2 for consistency. Install it with:
+
+```shell
+foundryup --version v1.4.2
+```
+
+Or use the helper script:
+```shell
+./setup-foundry.sh
+```
+
+**2. Install the pre-commit hook:**
+
 ```shell
 ./install-hooks.sh
 ```

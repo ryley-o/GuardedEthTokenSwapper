@@ -1,0 +1,10 @@
+# Foundry Version Configuration
+# This file specifies the required Foundry version for this project
+
+# Install this version with:
+#   foundryup --version v1.4.2
+
+# Using v1.4.2 - Latest stable release
+# Pin this version for consistency across all environments
+FOUNDRY_VERSION=v1.4.2
+
