@@ -1,0 +1,23 @@
+# GuardedEthTokenSwapper Git Attributes
+# Ensures consistent line endings across platforms
+
+# Auto detect text files
+* text=auto
+
+# Shell scripts must have LF line endings (Unix-style)
+*.sh text eol=lf
+hooks/* text eol=lf
+
+# Solidity files
+*.sol text eol=lf
+
+# Documentation
+*.md text eol=lf
+
+# Configuration files
+*.toml text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+.env.example text eol=lf
+

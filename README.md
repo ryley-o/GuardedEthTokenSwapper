@@ -47,6 +47,15 @@ ETH Input → Chainlink Price Check → Uniswap V3 Swap → Token Output
 
 ## Usage
 
+### Setup
+
+Install the pre-commit hook for automatic formatting:
+```shell
+./install-hooks.sh
+```
+
+This will automatically format Solidity files before each commit.
+
 ### Build
 ```shell
 forge build
