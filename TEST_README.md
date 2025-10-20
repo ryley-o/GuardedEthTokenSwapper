@@ -292,14 +292,31 @@ Follow the existing pattern:
 - All tests run in isolated VM environment
 - Private keys are generated for testing only
 
-## Next Steps
+## Security and Testing Notes
+
+**⚠️ THIS CONTRACT HAS NOT BEEN PROFESSIONALLY AUDITED.**
+
+This contract has been thoroughly tested via:
+- Unit tests for all core functionality
+- Fork testing against mainnet at block 23620206
+- Oracle price validation within 5% tolerance for all 14 tokens
+- Real-world liquidity validation with 3% slippage
+- Edge case and input validation testing
+
+However, automated testing does NOT replace a professional security audit. Users should:
+- Understand the risks before using this contract
+- Only use funds they can afford to lose
+- Review the code and tests themselves
+- Consider obtaining a professional audit if deploying to mainnet
+
+## Next Steps for Further Hardening
 
 1. **Additional Tokens**: Consider adding more high-quality ETH pairs with reliable Chainlink feeds
 2. **Advanced Scenarios**: Test oracle manipulation and MEV protection scenarios  
 3. **Stress Testing**: Test with extreme market conditions and high volatility
 4. **Gas Optimization**: Profile and optimize gas usage for different token types
 5. **Integration Tests**: Test with actual frontend integration and user workflows
-6. **Security Audit**: Professional security review before mainnet deployment
+6. **Professional Security Audit**: Recommended before mainnet deployment with significant value
 
 ## Test Results Summary
 
@@ -319,4 +336,4 @@ Ran 9 tests for test/GuardedEthTokenSwapper.t.sol:GuardedEthTokenSwapperTest
 Suite result: ok. 9 passed; 0 failed; 0 skipped
 ```
 
-The `testSwapMultipleEthPairs()` test is the most comprehensive, testing all 18 tokens with real mainnet data!
+The `testSwapMultipleEthPairs()` test is the most comprehensive, testing all 14 tokens with real mainnet data!

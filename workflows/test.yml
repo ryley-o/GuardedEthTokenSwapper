@@ -34,7 +34,39 @@ jobs:
           forge build --sizes
         id: build
 
-      - name: Run Forge tests
+      - name: Run Forge tests (without fork)
         run: |
           forge test -vvv
         id: test
+
+  fork-tests:
+    name: Fork Tests (Mainnet)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Run Fork Tests
+        run: |
+          forge test \
+            --match-test testSwapMultipleEthPairs \
+            --fork-url https://ethereum-rpc.publicnode.com \
+            --fork-block-number 23620206 \
+            -vv
+        id: fork-test
+        env:
+          # Use public RPC for CI - may be rate limited but sufficient for testing
+          ETH_RPC_URL: https://ethereum-rpc.publicnode.com
+
+      - name: Run Liquidity Validation Tests
+        run: |
+          forge test \
+            --match-test testLiquidityValidation \
+            --fork-url https://ethereum-rpc.publicnode.com \
+            --fork-block-number 23620206 \
+            -vv
+        id: liquidity-test

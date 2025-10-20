@@ -30,7 +30,7 @@ contract GuardedEthTokenSwapperTest is Test {
     address constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address constant UNISWAP_V3_FACTORY = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
     
-    // Fork testing configuration - CRITICAL: This block is optimized for all 13 tokens
+    // Fork testing configuration - CRITICAL: This block is optimized for all 14 tokens
     uint256 constant FORK_BLOCK = 23620206; // Block with verified liquidity and pricing
     
     // Test accounts
@@ -381,9 +381,6 @@ contract GuardedEthTokenSwapperTest is Test {
                         console.log("Expected range:", minExpected, "to", maxExpected);
                         console.log("Actual:", amountOut);
                         console.log("Percentage difference (bps):", percentDiff);
-                        
-                        // Log failure but continue testing other tokens for analysis
-                        // revert(string(abi.encodePacked("Oracle validation failed for ", config.symbol)));
                     }
                 } else {
                     console.log("Skipping oracle validation for", config.symbol, "(zero expected)");

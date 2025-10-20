@@ -32,12 +32,18 @@ library SafeTransfer {
 }
 
 /**
-    @title GuardedEthTokenSwapperETH
+    @title GuardedEthTokenSwapper
     @author ryley-o
     @notice Simplified ETH-only token swapper that uses TOKEN/ETH Chainlink price feeds.
     This version is optimized for ETH pairs only, removing USD complexity and reducing gas costs.
-    USE AT YOUR OWN RISK. DO NOT USE THIS CONTRACT IF YOU DO NOT UNDERSTAND THE RISKS.
-    It guards against severe sandwich attacks by checking TOKEN/ETH prices from Chainlink oracles.
+    
+    ⚠️ USE AT YOUR OWN RISK. DO NOT USE THIS CONTRACT IF YOU DO NOT UNDERSTAND THE RISKS.
+    ⚠️ THIS CONTRACT HAS NOT BEEN PROFESSIONALLY AUDITED.
+    ⚠️ ONLY USE FUNDS YOU CAN AFFORD TO LOSE.
+    
+    @dev It guards against severe sandwich attacks by checking TOKEN/ETH prices from Chainlink oracles.
+    The contract validates swap outcomes against oracle prices with configurable tolerance per token.
+    All supported tokens must be configured by the owner before swapping is enabled.
  */
 contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
     using SafeTransfer for address;
@@ -83,11 +89,28 @@ contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
     event FeedRemoved(address indexed token);
     event Swapped(address indexed user, address indexed token, uint256 ethIn, uint256 tokensOut, uint24 fee, uint256 minOut, uint256 tokenEthPrice);
 
+    /**
+     * @notice Initializes the contract and sets the deployer as owner
+     * @dev No ETH/USD feed needed - we only use TOKEN/ETH feeds
+     */
     constructor() Ownable(msg.sender) {
-        // No ETH/USD feed needed - we only use TOKEN/ETH feeds
+        // Deployer becomes the owner via Ownable constructor
     }
 
     // --- Admin: set/update entries (token, aggregator, feeTier, toleranceBps) ---
+    /**
+     * @notice Configures price feeds and swap parameters for multiple tokens (owner only)
+     * @dev All arrays must be the same length. Each token gets a dedicated Chainlink feed and Uniswap config.
+     * @param tokens Array of ERC20 token addresses to configure
+     * @param aggregators Array of Chainlink TOKEN/ETH price feed addresses
+     * @param feeTiers Array of Uniswap V3 fee tiers (500=0.05%, 3000=0.30%, 10000=1.00%)
+     * @param toleranceBpsArr Array of price tolerance values in basis points (e.g., 200=2%)
+     * Requirements:
+     * - All arrays must have matching length
+     * - Token and aggregator addresses must be non-zero
+     * - Fee tiers must be 500, 3000, or 10000
+     * - Tolerance must be ≤ 2000 bps (20%)
+     */
     function setFeeds(
         address[] calldata tokens,
         address[] calldata aggregators,
@@ -117,6 +140,12 @@ contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
     }
 
     // --- Admin: remove feed ---
+    /**
+     * @notice Removes price feed configuration for a token (owner only)
+     * @dev After removal, swaps for this token will revert with FeedNotSet error.
+     * Use this to disable support for a token without redeploying the contract.
+     * @param token The ERC20 token address to remove from supported tokens
+     */
     function removeFeed(address token) external onlyOwner {
         require(feeds[token].aggregator != address(0), "feed not set");
         delete feeds[token];
@@ -188,7 +217,15 @@ contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
         emit Swapped(msg.sender, token, msg.value, amountOut, f.feeTier, minOut, tokEthPrice);
     }
 
-    // Views
+    // --- View functions ---
+    /**
+     * @notice Returns the configuration for a given token
+     * @param token The ERC20 token address to query
+     * @return aggregator The Chainlink price feed address (zero if not configured)
+     * @return decimals The cached decimal count from the price feed
+     * @return feeTier The Uniswap V3 fee tier to use for swaps
+     * @return toleranceBps The price tolerance in basis points
+     */
     function getFeed(address token) external view returns (address aggregator, uint8 decimals, uint24 feeTier, uint16 toleranceBps) {
         FeedInfo memory x = feeds[token];
         return (x.aggregator, x.decimalsCache, x.feeTier, x.toleranceBps);

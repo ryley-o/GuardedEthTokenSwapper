@@ -66,9 +66,27 @@ forge test --fork-url https://ethereum-rpc.publicnode.com --fork-block-number 23
 ```
 
 ### Deploy
-```shell
-forge script script/Deploy.s.sol --rpc-url <your_rpc_url> --private-key <your_private_key>
+
+**See [DEPLOYMENT.md](DEPLOYMENT.md) for comprehensive deployment guide.**
+
+Quick start:
+
+```bash
+# 1. Configure environment variables
+cp .env.example .env
+# Edit .env with your values (see .env.example for details)
+
+# 2. Deploy
+./deploy.sh
 ```
+
+The deployment script will:
+- Deploy the GuardedEthTokenSwapper contract
+- Configure all 14 production-ready token pairs
+- Automatically verify on Etherscan (if API key provided)
+- Provide clear confirmation prompts and status updates
+
+**⚠️ Read DEPLOYMENT.md for security best practices and detailed instructions.**
 
 ## Configuration
 
@@ -110,4 +128,10 @@ MIT License - see LICENSE file for details.
 
 ## Disclaimer
 
-This contract is provided as-is for educational and experimental purposes. It has not been audited. Use at your own risk and only with funds you can afford to lose.
+**⚠️ THIS CONTRACT HAS NOT BEEN PROFESSIONALLY AUDITED.**
+
+This contract is provided as-is and has been tested via the comprehensive test suite documented in this repository. However, it has NOT undergone a professional security audit. 
+
+**Use at your own risk and only with funds you can afford to lose.**
+
+See `TEST_README.md` for details on the testing methodology and coverage.
