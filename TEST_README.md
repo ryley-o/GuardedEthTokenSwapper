@@ -132,7 +132,7 @@ The test suite includes **14 production-ready ETH pairs** with 5% oracle validat
 
 ### Test Cases
 
-The test suite includes **9 comprehensive test cases**:
+The test suite includes **10 comprehensive test cases**:
 
 1. **`testSwapEthForToken()`**
    - Tests single token swap (LINK by default)
@@ -143,42 +143,67 @@ The test suite includes **9 comprehensive test cases**:
    - Tests all 14 configured tokens in sequence
    - Uses 0.1 ETH per swap with 15% slippage tolerance
    - Validates oracle pricing within 5% tolerance for each token
-   - Most comprehensive integration test with 100% success rate requirement
+   - Most comprehensive oracle validation test with 100% success rate requirement
 
-3. **`testSlippageValidation()`**
+3. **`testLiquidityValidation()`**
+   - Tests real-world liquidity with 3% slippage tolerance
+   - Uses 0.1 ETH per swap for all 14 tokens
+   - Validates sufficient pool depth for practical trading
+   - Ensures no reverts under normal market conditions
+   - 100% success rate required for production readiness
+
+4. **`testSlippageValidation()`**
    - Tests slippage bounds (0-10,000 bps = 0-100%)
    - Verifies rejection of invalid slippage (>100%)
    - Uses `InvalidSlippage` custom error
 
-4. **`testDeadlineValidation()`**
+5. **`testDeadlineValidation()`**
    - Tests deadline enforcement
    - Verifies rejection of expired deadlines
    - Uses standard "deadline expired" revert message
 
-5. **`testZeroEthRevert()`**
+6. **`testZeroEthRevert()`**
    - Tests zero ETH input validation
    - Verifies `NoEthSent` custom error is thrown
    - Ensures contract rejects empty transactions
 
-6. **`testFeedNotSet()`**
+7. **`testFeedNotSet()`**
    - Tests behavior with unconfigured tokens
    - Verifies `FeedNotSet` custom error for unknown tokens
    - Ensures only admin-configured tokens can be swapped
 
-7. **`testSimplifiedAdminFunctions()`**
+8. **`testSimplifiedAdminFunctions()`**
    - Tests admin-only feed configuration
    - Verifies `setFeeds()` and `removeFeed()` functions
    - Tests access control (only owner can configure)
 
-8. **`testSimplifiedEvents()`**
+9. **`testSimplifiedEvents()`**
    - Tests event emission for successful swaps
    - Verifies `Swapped` event with correct parameters
    - Includes: user, token, ethIn, tokensOut, fee, minOut, tokenEthPrice
 
-9. **`testGasEfficiency()`**
+10. **`testGasEfficiency()`**
    - Measures gas usage for typical swaps
    - Helps identify gas optimization opportunities
    - Provides baseline for performance monitoring
+
+## Key Testing Features
+
+### Dual Validation Approach
+
+Our test suite uses a **dual validation approach** to ensure both pricing accuracy and liquidity reliability:
+
+1. **Oracle Price Validation** (`testSwapMultipleEthPairs`)
+   - **5% tolerance**: Ensures received tokens match Chainlink oracle prices within 5%
+   - **15% slippage**: Generous tolerance to focus on oracle accuracy validation
+   - **Purpose**: Validates sandwich attack protection and pricing accuracy
+
+2. **Real-World Liquidity Validation** (`testLiquidityValidation`)
+   - **3% slippage**: Tests realistic trading conditions
+   - **0.1 ETH trades**: Standard trading amounts for practical validation
+   - **Purpose**: Ensures sufficient pool depth for actual user transactions
+
+This approach guarantees that our tokens are both **accurately priced** (oracle validation) and **practically tradeable** (liquidity validation) under real market conditions.
 
 ## Addresses Used
 
@@ -189,12 +214,13 @@ The test suite includes **9 comprehensive test cases**:
 
 ### Key Features
 - **ETH-Only Design**: Uses only TOKEN/ETH Chainlink feeds (no USD conversion needed)
-- **18 Verified Feeds**: All tokens use official Chainlink TOKEN/ETH price feeds
-- **Optimal Fee Tiers**: 0.05% for stablecoins, 0.30% for major tokens, 1.00% for volatile tokens
+- **14 Verified Feeds**: All tokens use official Chainlink TOKEN/ETH price feeds
+- **Optimal Fee Tiers**: 0.05% for major assets, 0.30% for DeFi tokens, 1.00% for volatile tokens
 - **Oracle Staleness**: 24-hour maximum age for price data
+- **Dual Testing**: 5% oracle validation + 3% real-world slippage validation
 
 ### Fork Block
-- **Block Number**: 20935000 (October 10, 2024 11:46 UTC)
+- **Block Number**: 23620206 (optimized for all 14 tokens)
 
 ## Troubleshooting
 

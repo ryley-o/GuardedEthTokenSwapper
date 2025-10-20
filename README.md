@@ -97,7 +97,8 @@ See `test/GuardedEthTokenSwapper.t.sol` for complete configuration examples.
 
 Comprehensive test suite includes:
 - Fork testing against mainnet at block 23620206 (optimized for all 14 tokens)
-- All 14 supported tokens with 5% oracle validation tolerance
+- Oracle price validation with 5% tolerance for all 14 tokens
+- Real-world liquidity validation with 3% slippage tolerance
 - Slippage validation, deadline checks, admin functions
 - Gas efficiency and security tests
 

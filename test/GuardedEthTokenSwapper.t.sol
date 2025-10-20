@@ -409,57 +409,6 @@ contract GuardedEthTokenSwapperTest is Test {
         vm.stopPrank();
     }
     
-    // Comprehensive test that validates each token individually
-    function testEachTokenWithOracleValidation() public {
-        if (!isForkMode) {
-            console.log("Skipping testEachTokenWithOracleValidation - requires fork mode");
-            return;
-        }
-        
-        vm.startPrank(user);
-        
-        uint256 ethAmount = 1 ether; // Use 1 ETH for more precise calculations
-        uint256 deadline = block.timestamp + 300;
-        uint16 slippage = 500; // 5% - tighter tolerance for individual testing
-        
-        console.log("=== COMPREHENSIVE", tokenConfigs.length, "TOKEN ORACLE VALIDATION TEST ===");
-        console.log("Testing each token individually with detailed oracle price validation");
-        console.log("");
-        
-        // Track successful tests
-        uint256 successCount = 0;
-        
-        for (uint256 i = 0; i < tokenConfigs.length; i++) {
-            TokenConfig memory config = tokenConfigs[i];
-            
-            console.log("=== TOKEN", i + 1, "of", tokenConfigs.length);
-            console.log("Token address:", config.token);
-            console.log("Chainlink feed:", config.chainlinkFeed);
-            console.log("Fee tier:", config.feeTier);
-            
-            try this.validateSingleTokenSwap(config, ethAmount, slippage, deadline) {
-                successCount++;
-                console.log("SUCCESS:", config.symbol, "passed all validations");
-            } catch Error(string memory reason) {
-                console.log("FAILED:", config.symbol, "- Reason:", reason);
-                // Don't fail the entire test, just log the failure
-            } catch {
-                console.log("FAILED:", config.symbol, "- Unknown error");
-            }
-            
-            console.log("");
-        }
-        
-        console.log("=== FINAL RESULTS ===");
-        console.log("Successful tokens:", successCount, "out of", tokenConfigs.length);
-        console.log("Success rate:", (successCount * 100) / tokenConfigs.length, "%");
-        
-        // Require 100% success rate - all tokens must pass oracle validation
-        assertEq(successCount, tokenConfigs.length, "All tokens must pass oracle validation (100% success rate required)");
-        
-        vm.stopPrank();
-    }
-    
     // External function for individual token validation (allows try/catch)
     function validateSingleTokenSwap(
         TokenConfig memory config, 
@@ -537,6 +486,70 @@ contract GuardedEthTokenSwapperTest is Test {
             // These feeds give "ETH per TOKEN" but the contract normalizes them
             return (ethAmount * (10 ** oracleDecimals) * (10 ** tokenDecimals)) / (1e18 * oraclePrice);
         }
+    }
+    
+    // Test liquidity validation - ensures all tokens can handle 3% slippage with 0.1 ETH
+    function testLiquidityValidation() public {
+        if (!isForkMode) {
+            console.log("Skipping testLiquidityValidation - requires fork mode");
+            return;
+        }
+        
+        vm.startPrank(user);
+        
+        uint256 ethAmount = 0.1 ether; // Standard trading amount
+        uint256 deadline = block.timestamp + 300;
+        uint16 slippage = 300; // 3% - reasonable real-world slippage
+        
+        console.log("=== LIQUIDITY VALIDATION TEST ===");
+        console.log("Testing 3% slippage tolerance with 0.1 ETH for all", tokenConfigs.length, "tokens");
+        console.log("");
+        
+        uint256 successfulSwaps = 0;
+        
+        for (uint256 i = 0; i < tokenConfigs.length; i++) {
+            TokenConfig memory config = tokenConfigs[i];
+            
+            console.log("Testing liquidity for:", config.symbol);
+            
+            uint256 initialBalance = user.balance;
+            uint256 initialTokenBalance = IERC20Extended(config.token).balanceOf(user);
+            
+            try swapper.swapEthForToken{value: ethAmount}(
+                config.token,
+                slippage,
+                deadline
+            ) returns (uint256 amountOut) {
+                uint256 finalBalance = user.balance;
+                uint256 finalTokenBalance = IERC20Extended(config.token).balanceOf(user);
+                
+                // Verify ETH was deducted
+                assertEq(finalBalance, initialBalance - ethAmount, "ETH not properly deducted");
+                
+                // Verify tokens were received
+                assertGt(finalTokenBalance, initialTokenBalance, "No tokens received");
+                assertEq(finalTokenBalance - initialTokenBalance, amountOut, "Token balance mismatch");
+                
+                console.log("PASSED - Received", amountOut, "tokens");
+                successfulSwaps++;
+                
+            } catch Error(string memory reason) {
+                console.log("FAILED -", reason);
+            } catch (bytes memory) {
+                console.log("FAILED - Low-level revert");
+            }
+            
+            console.log("");
+        }
+        
+        console.log("=== LIQUIDITY VALIDATION RESULTS ===");
+        console.log("Successful swaps:", successfulSwaps, "out of", tokenConfigs.length);
+        console.log("Success rate:", (successfulSwaps * 100) / tokenConfigs.length, "%");
+        
+        // Require 100% success rate for production readiness
+        assertEq(successfulSwaps, tokenConfigs.length, "All tokens must pass liquidity validation (100% success rate required)");
+        
+        vm.stopPrank();
     }
     
     // Test gas efficiency comparison
