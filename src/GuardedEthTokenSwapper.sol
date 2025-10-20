@@ -83,7 +83,7 @@ contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
         uint8 decimalsCache; // 1 byte  - cached decimals from aggregator
         uint24 feeTier; // 3 bytes - Uniswap V3 fee tier
         uint16 toleranceBps; // 2 bytes - price tolerance in basis points
-            // 6 bytes padding
+        // 6 bytes padding
     }
 
     mapping(address => FeedInfo) public feeds; // token => config

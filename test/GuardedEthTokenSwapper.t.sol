@@ -525,8 +525,9 @@ contract GuardedEthTokenSwapperTest is Test {
             uint256 initialBalance = user.balance;
             uint256 initialTokenBalance = IERC20Extended(config.token).balanceOf(user);
 
-            try swapper.swapEthForToken{value: ethAmount}(config.token, slippage, deadline) returns (uint256 amountOut)
-            {
+            try swapper.swapEthForToken{value: ethAmount}(config.token, slippage, deadline) returns (
+                uint256 amountOut
+            ) {
                 uint256 finalBalance = user.balance;
                 uint256 finalTokenBalance = IERC20Extended(config.token).balanceOf(user);
 
@@ -620,7 +621,9 @@ contract GuardedEthTokenSwapperTest is Test {
         uint256 deadline = block.timestamp + 300;
 
         vm.expectRevert(GuardedEthTokenSwapper.InvalidSlippage.selector);
-        swapper.swapEthForToken{value: 1 ether}(
+        swapper.swapEthForToken{
+            value: 1 ether
+        }(
             LINK,
             10001, // > 100%
             deadline
@@ -633,7 +636,9 @@ contract GuardedEthTokenSwapperTest is Test {
         vm.startPrank(user);
 
         vm.expectRevert("deadline expired");
-        swapper.swapEthForToken{value: 1 ether}(
+        swapper.swapEthForToken{
+            value: 1 ether
+        }(
             LINK,
             200,
             block.timestamp - 1 // Past deadline
