@@ -1,5 +1,7 @@
 # GuardedEthTokenSwapper
 
+[![CI](https://github.com/ryley-o/GuardedEthTokenSwapper/actions/workflows/test.yml/badge.svg)](https://github.com/ryley-o/GuardedEthTokenSwapper/actions/workflows/test.yml)
+
 A secure, gas-optimized smart contract for swapping ETH to ERC20 tokens using Chainlink price feeds and Uniswap V3.
 
 ## Overview
