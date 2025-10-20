@@ -57,15 +57,26 @@ forge build
 # Quick tests (no fork required)
 ./test_quick.sh
 
-# Comprehensive fork testing - CRITICAL: Uses block 23620206
+# Validated fork testing - Uses block 23620206 (KNOWN to work)
 ./test_fork.sh
+
+# Latest fork testing - Uses current mainnet block
+./test_fork_latest.sh
 
 # Or set your own RPC URL
 ETH_RPC_URL="https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY" ./test_fork.sh
 
-# Manual testing
+# Manual testing (validated block)
 forge test --fork-url https://ethereum-rpc.publicnode.com --fork-block-number 23620206
+
+# Manual testing (latest block)
+forge test --fork-url $ETH_RPC_URL --fork-block-number $(cast block-number --rpc-url $ETH_RPC_URL)
 ```
+
+**When to use each:**
+- `test_quick.sh` - Fast development testing (no fork, no RPC needed)
+- `test_fork.sh` - Validation against known-good state (block 23620206)
+- `test_fork_latest.sh` - Test current mainnet compatibility
 
 ### Deploy
 

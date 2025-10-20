@@ -1,12 +1,13 @@
 #!/bin/bash
 
-# GuardedEthTokenSwapper Fork Testing Script
-# CRITICAL: This script uses block 23620206 which is optimized for all 14 tokens
+# GuardedEthTokenSwapper Validated Fork Testing Script
+# CRITICAL: This script uses block 23620206 which is VALIDATED for all 14 tokens
+# For latest block testing, use: ./test_fork_latest.sh
 
 set -e
 
-echo "🚀 GuardedEthTokenSwapper Fork Testing"
-echo "======================================="
+echo "🚀 GuardedEthTokenSwapper Validated Fork Testing"
+echo "=================================================="
 echo ""
 
 # Check if RPC URL is provided
@@ -23,7 +24,11 @@ fi
 # Fork block - CRITICAL for test success
 FORK_BLOCK=23620206
 
-echo "🔗 Fork Block: $FORK_BLOCK (optimized for 14 tokens)"
+echo "🔗 Validated Fork Block: $FORK_BLOCK"
+echo "   This block is KNOWN to work with all 14 configured tokens"
+echo "   Liquidity, prices, and oracle feeds are validated at this block"
+echo ""
+echo "💡 To test with latest mainnet state, use: ./test_fork_latest.sh"
 echo ""
 
 # Run the comprehensive test
@@ -38,10 +43,15 @@ forge test \
     -vv
 
 echo ""
-echo "✅ Fork testing completed!"
+echo "✅ Validated fork testing completed!"
 echo ""
 echo "📊 Test Summary:"
 echo "   • 14 production-ready tokens tested"
 echo "   • 5% oracle validation tolerance"
 echo "   • 100% success rate required"
-echo "   • Block $FORK_BLOCK (optimized liquidity)"
+echo "   • Block $FORK_BLOCK (validated configuration)"
+echo ""
+echo "💡 Next Steps:"
+echo "   • All tests passed at validated block"
+echo "   • For current mainnet testing: ./test_fork_latest.sh"
+echo "   • For quick tests without fork: ./test_quick.sh"

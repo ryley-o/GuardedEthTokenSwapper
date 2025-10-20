@@ -36,12 +36,37 @@ Use the provided shell scripts for easy testing:
 # Quick tests (no fork required)
 ./test_quick.sh
 
-# Comprehensive fork testing (uses block 23620206)
+# Validated fork testing (uses block 23620206 - known to work)
 ./test_fork.sh
+
+# Latest fork testing (uses current mainnet block)
+./test_fork_latest.sh
 
 # With custom RPC URL
 ETH_RPC_URL="https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY" ./test_fork.sh
 ```
+
+### Testing Strategy
+
+**Three testing modes available:**
+
+1. **Quick Tests (`./test_quick.sh`)**
+   - No RPC connection needed
+   - Fast execution (~2 seconds)
+   - Tests contract logic and validation
+   - Best for: Development and rapid iteration
+
+2. **Validated Fork Tests (`./test_fork.sh`)**
+   - Uses block 23620206 (validated state)
+   - All 14 tokens KNOWN to work
+   - Deterministic and reproducible
+   - Best for: CI/CD and verification
+
+3. **Latest Fork Tests (`./test_fork_latest.sh`)**
+   - Uses current mainnet block
+   - Tests current market conditions
+   - May fail if liquidity shifts
+   - Best for: Ongoing monitoring and updates
 
 ### Basic Tests (No Fork Required)
 
@@ -88,21 +113,29 @@ forge test --match-test testSwapMultipleEthPairs --fork-url https://ethereum-rpc
 
 ## Important Notes
 
-### Fork Block 23620206
+### Fork Testing Blocks
 
-**CRITICAL**: All fork testing must use block `23620206`. This block is specifically optimized for:
-- All 14 tokens have verified liquidity
+**Validated Block (23620206):**
+- All 14 tokens have VERIFIED liquidity
 - Oracle feeds are active and accurate
 - Uniswap V3 pools have optimal liquidity distribution
 - 5% oracle validation tolerance is achievable
+- **Use for:** Deterministic testing and CI/CD
 
-Using any other block may result in test failures due to liquidity or pricing issues.
+**Latest Block (Dynamic):**
+- Tests current mainnet state
+- Liquidity and prices may differ from validated configuration
+- Some tests may fail if market conditions changed
+- **Use for:** Ongoing monitoring and compatibility checks
+
+**Recommendation:** Use validated block (23620206) for regression testing and deployment validation. Use latest block for monitoring current mainnet compatibility.
 
 ### Shell Scripts
 
-Two convenience scripts are provided:
+Three convenience scripts are provided:
 - `./test_quick.sh` - Fast tests without fork (development)
-- `./test_fork.sh` - Comprehensive fork testing (production validation)
+- `./test_fork.sh` - Validated fork testing at block 23620206 (CI/CD)
+- `./test_fork_latest.sh` - Latest block fork testing (monitoring)
 
 ## Test Coverage
 
