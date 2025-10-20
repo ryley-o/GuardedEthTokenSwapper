@@ -6,21 +6,33 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 
 // --- Chainlink Aggregator ---
 interface AggregatorV3Interface {
-    function latestRoundData()
-        external
-        view
-        returns (uint80, int256, uint256, uint256, uint80);
+    function latestRoundData() external view returns (uint80, int256, uint256, uint256, uint80);
     function decimals() external view returns (uint8);
 }
 
 // --- ERC20 / WETH / Uniswap v3 ---
-interface IERC20 { function decimals() external view returns (uint8); function transfer(address,uint256) external returns (bool); }
-interface IWETH9 { function deposit() external payable; function approve(address,uint256) external returns (bool); }
+interface IERC20 {
+    function decimals() external view returns (uint8);
+    function transfer(address, uint256) external returns (bool);
+}
+
+interface IWETH9 {
+    function deposit() external payable;
+    function approve(address, uint256) external returns (bool);
+}
+
 interface ISwapRouter {
     struct ExactInputSingleParams {
-        address tokenIn; address tokenOut; uint24 fee; address recipient;
-        uint256 deadline; uint256 amountIn; uint256 amountOutMinimum; uint160 sqrtPriceLimitX96;
+        address tokenIn;
+        address tokenOut;
+        uint24 fee;
+        address recipient;
+        uint256 deadline;
+        uint256 amountIn;
+        uint256 amountOutMinimum;
+        uint160 sqrtPriceLimitX96;
     }
+
     function exactInputSingle(ExactInputSingleParams calldata) external payable returns (uint256 amountOut);
 }
 
@@ -32,31 +44,31 @@ library SafeTransfer {
 }
 
 /**
-    @title GuardedEthTokenSwapper
-    @author ryley-o
-    @notice Simplified ETH-only token swapper that uses TOKEN/ETH Chainlink price feeds.
-    This version is optimized for ETH pairs only, removing USD complexity and reducing gas costs.
-    
-    ⚠️ USE AT YOUR OWN RISK. DO NOT USE THIS CONTRACT IF YOU DO NOT UNDERSTAND THE RISKS.
-    ⚠️ THIS CONTRACT HAS NOT BEEN PROFESSIONALLY AUDITED.
-    ⚠️ ONLY USE FUNDS YOU CAN AFFORD TO LOSE.
-    
-    @dev It guards against severe sandwich attacks by checking TOKEN/ETH prices from Chainlink oracles.
-    The contract validates swap outcomes against oracle prices with configurable tolerance per token.
-    All supported tokens must be configured by the owner before swapping is enabled.
+ * @title GuardedEthTokenSwapper
+ *     @author ryley-o
+ *     @notice Simplified ETH-only token swapper that uses TOKEN/ETH Chainlink price feeds.
+ *     This version is optimized for ETH pairs only, removing USD complexity and reducing gas costs.
+ *
+ *     ⚠️ USE AT YOUR OWN RISK. DO NOT USE THIS CONTRACT IF YOU DO NOT UNDERSTAND THE RISKS.
+ *     ⚠️ THIS CONTRACT HAS NOT BEEN PROFESSIONALLY AUDITED.
+ *     ⚠️ ONLY USE FUNDS YOU CAN AFFORD TO LOSE.
+ *
+ *     @dev It guards against severe sandwich attacks by checking TOKEN/ETH prices from Chainlink oracles.
+ *     The contract validates swap outcomes against oracle prices with configurable tolerance per token.
+ *     All supported tokens must be configured by the owner before swapping is enabled.
  */
 contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
     using SafeTransfer for address;
 
     // Mainnet constants
     address public constant UNISWAP_V3_ROUTER = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
-    address public constant WETH9_ADDR        = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    
+    address public constant WETH9_ADDR = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+
     // Oracle staleness threshold (24 hours)
     uint256 public constant MAX_ORACLE_STALENESS = 24 hours;
 
     ISwapRouter public immutable router = ISwapRouter(UNISWAP_V3_ROUTER);
-    IWETH9 public immutable weth   = IWETH9(WETH9_ADDR);
+    IWETH9 public immutable weth = IWETH9(WETH9_ADDR);
 
     /**
      * Simplified per-token registry entry (fits in 1 storage slot):
@@ -67,12 +79,13 @@ contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
      * Total: 26 bytes (fits in 1 slot with 6 bytes padding)
      */
     struct FeedInfo {
-        address aggregator;   // 20 bytes - TOKEN/ETH price feed
-        uint8   decimalsCache;// 1 byte  - cached decimals from aggregator
-        uint24  feeTier;      // 3 bytes - Uniswap V3 fee tier
-        uint16  toleranceBps; // 2 bytes - price tolerance in basis points
-        // 6 bytes padding
+        address aggregator; // 20 bytes - TOKEN/ETH price feed
+        uint8 decimalsCache; // 1 byte  - cached decimals from aggregator
+        uint24 feeTier; // 3 bytes - Uniswap V3 fee tier
+        uint16 toleranceBps; // 2 bytes - price tolerance in basis points
+            // 6 bytes padding
     }
+
     mapping(address => FeedInfo) public feeds; // token => config
 
     // Errors / events
@@ -85,9 +98,19 @@ contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
     error ApproveFailed();
     error TransferFailed();
 
-    event FeedSet(address indexed token, address indexed aggregator, uint8 decimals, uint24 feeTier, uint16 toleranceBps);
+    event FeedSet(
+        address indexed token, address indexed aggregator, uint8 decimals, uint24 feeTier, uint16 toleranceBps
+    );
     event FeedRemoved(address indexed token);
-    event Swapped(address indexed user, address indexed token, uint256 ethIn, uint256 tokensOut, uint24 fee, uint256 minOut, uint256 tokenEthPrice);
+    event Swapped(
+        address indexed user,
+        address indexed token,
+        uint256 ethIn,
+        uint256 tokensOut,
+        uint24 fee,
+        uint256 minOut,
+        uint256 tokenEthPrice
+    );
 
     /**
      * @notice Initializes the contract and sets the deployer as owner
@@ -114,8 +137,8 @@ contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
     function setFeeds(
         address[] calldata tokens,
         address[] calldata aggregators,
-        uint24[]  calldata feeTiers,
-        uint16[]  calldata toleranceBpsArr
+        uint24[] calldata feeTiers,
+        uint16[] calldata toleranceBpsArr
     ) external onlyOwner {
         uint256 n = tokens.length;
         require(n == aggregators.length && n == feeTiers.length && n == toleranceBpsArr.length, "len mismatch");
@@ -128,14 +151,10 @@ contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
         require(token != address(0) && aggregator != address(0), "zero addr");
         require(feeTier == 500 || feeTier == 3000 || feeTier == 10000, "bad fee");
         require(toleranceBps <= 2000, "tolerance too high"); // <=20%
-        
+
         uint8 dec = AggregatorV3Interface(aggregator).decimals();
-        feeds[token] = FeedInfo({
-            aggregator: aggregator,
-            decimalsCache: dec,
-            feeTier: feeTier,
-            toleranceBps: toleranceBps
-        });
+        feeds[token] =
+            FeedInfo({aggregator: aggregator, decimalsCache: dec, feeTier: feeTier, toleranceBps: toleranceBps});
         emit FeedSet(token, aggregator, dec, feeTier, toleranceBps);
     }
 
@@ -159,11 +178,12 @@ contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
      * @param deadline       Unix timestamp after which the transaction will revert.
      * @return amountOut     Tokens transferred to msg.sender.
      */
-    function swapEthForToken(
-        address token,
-        uint16  slippageBps,
-        uint256 deadline
-    ) external payable nonReentrant returns (uint256 amountOut) {
+    function swapEthForToken(address token, uint16 slippageBps, uint256 deadline)
+        external
+        payable
+        nonReentrant
+        returns (uint256 amountOut)
+    {
         if (msg.value == 0) revert NoEthSent();
         if (slippageBps > 10000) revert InvalidSlippage(); // Max 100%
         if (deadline < block.timestamp) revert("deadline expired");
@@ -184,7 +204,7 @@ contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
             uint8 tokenDec = IERC20(token).decimals();
             // TOKEN/ETH price means: tokEthPrice * 10^decimalsCache = tokens per 1 ETH
             // For msg.value ETH: expectedTokens = msg.value * tokEthPrice * 10^tokenDec / (1e18 * 10^decimalsCache)
-            
+
             // Use precision scaling to avoid early division
             uint256 scaledNumerator = msg.value * tokEthPrice * (10 ** tokenDec);
             expectedTokens = scaledNumerator / (1e18 * (10 ** f.decimalsCache));
@@ -200,9 +220,9 @@ contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
         if (!weth.approve(UNISWAP_V3_ROUTER, msg.value)) revert ApproveFailed();
 
         ISwapRouter.ExactInputSingleParams memory p = ISwapRouter.ExactInputSingleParams({
-            tokenIn:  WETH9_ADDR,
+            tokenIn: WETH9_ADDR,
             tokenOut: token,
-            fee:      f.feeTier,
+            fee: f.feeTier,
             recipient: address(this),
             deadline: deadline,
             amountIn: msg.value,
@@ -226,10 +246,16 @@ contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
      * @return feeTier The Uniswap V3 fee tier to use for swaps
      * @return toleranceBps The price tolerance in basis points
      */
-    function getFeed(address token) external view returns (address aggregator, uint8 decimals, uint24 feeTier, uint16 toleranceBps) {
+    function getFeed(address token)
+        external
+        view
+        returns (address aggregator, uint8 decimals, uint24 feeTier, uint16 toleranceBps)
+    {
         FeedInfo memory x = feeds[token];
         return (x.aggregator, x.decimalsCache, x.feeTier, x.toleranceBps);
     }
 
-    receive() external payable { revert(); }
+    receive() external payable {
+        revert();
+    }
 }

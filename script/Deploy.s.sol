@@ -8,10 +8,10 @@ import {GuardedEthTokenSwapper} from "../src/GuardedEthTokenSwapper.sol";
 /**
  * @title Deploy Script for GuardedEthTokenSwapper
  * @notice Deploys the contract and configures all 14 production-ready token pairs
- * 
+ *
  * Usage:
  *   forge script script/Deploy.s.sol:Deploy --rpc-url $ETH_RPC_URL --broadcast --verify
- * 
+ *
  * Or with explicit parameters:
  *   forge script script/Deploy.s.sol:Deploy \
  *     --rpc-url $ETH_RPC_URL \
@@ -19,7 +19,7 @@ import {GuardedEthTokenSwapper} from "../src/GuardedEthTokenSwapper.sol";
  *     --etherscan-api-key $ETHERSCAN_API_KEY \
  *     --broadcast \
  *     --verify
- * 
+ *
  * Dry run (no broadcast):
  *   forge script script/Deploy.s.sol:Deploy --rpc-url $ETH_RPC_URL
  */
@@ -76,7 +76,7 @@ contract Deploy is Script {
         // 2. Prepare all token configurations
         console.log("Step 2: Preparing token configurations...");
         TokenConfig[] memory configs = _getTokenConfigs();
-        
+
         address[] memory tokens = new address[](14);
         address[] memory aggregators = new address[](14);
         uint24[] memory feeTiers = new uint24[](14);
@@ -87,7 +87,7 @@ contract Deploy is Script {
             aggregators[i] = configs[i].chainlinkFeed;
             feeTiers[i] = configs[i].feeTier;
             toleranceBpsArr[i] = configs[i].toleranceBps;
-            
+
             console.log("  [%s] %s", i + 1, configs[i].symbol);
             console.log("    Token:", configs[i].token);
             console.log("    Feed:", configs[i].chainlinkFeed);
@@ -105,7 +105,7 @@ contract Deploy is Script {
         // 4. Verify configuration
         console.log("Step 4: Verifying configuration...");
         for (uint256 i = 0; i < configs.length; i++) {
-            (address agg, , uint24 fee, uint16 tol) = swapper.getFeed(configs[i].token);
+            (address agg,, uint24 fee, uint16 tol) = swapper.getFeed(configs[i].token);
             require(agg == configs[i].chainlinkFeed, "Feed mismatch");
             require(fee == configs[i].feeTier, "Fee tier mismatch");
             require(tol == configs[i].toleranceBps, "Tolerance mismatch");
@@ -263,4 +263,3 @@ contract Deploy is Script {
         return configs;
     }
 }
-
