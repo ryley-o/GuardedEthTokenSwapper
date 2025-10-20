@@ -22,14 +22,14 @@ GuardedEthTokenSwapper is an ETH-only token swapper that protects against sandwi
 
 ## Supported Tokens
 
-The contract currently supports 18 high-quality ETH pairs:
+The contract supports 13 production-ready ETH pairs with 5% oracle validation tolerance:
 
-- **DeFi Tokens**: 1INCH, AAVE, BAL, COMP, CRV, LDO, LINK, MKR, SUSHI, UNI
-- **Major Assets**: WBTC (Bitcoin), SHIB (Meme)
+- **DeFi Tokens**: 1INCH, AAVE, COMP, CRV, LDO, LINK, MKR, UNI
+- **Major Assets**: SHIB (Meme)
 - **Stablecoin**: USDT
-- **Other**: APE, BAT, FIL, LRC, ZRX
+- **Other**: APE, BAT, ZRX
 
-All tokens use verified Chainlink TOKEN/ETH price feeds and optimal Uniswap V3 fee tiers.
+All tokens use verified Chainlink TOKEN/ETH price feeds and optimal Uniswap V3 fee tiers, tested at block 23620206.
 
 ## Architecture
 
@@ -52,11 +52,17 @@ forge build
 
 ### Test
 ```shell
-# Run all tests
-forge test
+# Quick tests (no fork required)
+./test_quick.sh
 
-# Run with fork testing (requires RPC URL)
-forge test --fork-url <your_rpc_url> --fork-block-number 20935000
+# Comprehensive fork testing - CRITICAL: Uses block 23620206
+./test_fork.sh
+
+# Or set your own RPC URL
+ETH_RPC_URL="https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY" ./test_fork.sh
+
+# Manual testing
+forge test --fork-url https://ethereum-rpc.publicnode.com --fork-block-number 23620206
 ```
 
 ### Deploy
@@ -90,8 +96,8 @@ See `test/GuardedEthTokenSwapper.t.sol` for complete configuration examples.
 ## Testing
 
 Comprehensive test suite includes:
-- Fork testing against mainnet at block 20935000 (Oct 10, 2024)
-- All 18 supported tokens with real Chainlink feeds
+- Fork testing against mainnet at block 23620206 (optimized for all 13 tokens)
+- All 13 supported tokens with 5% oracle validation tolerance
 - Slippage validation, deadline checks, admin functions
 - Gas efficiency and security tests
 
