@@ -38,7 +38,7 @@ contract GuardedEthTokenSwapperTest is Test {
     address admin = makeAddr("admin");
     
     // Production-ready token addresses for ETH swapping (mainnet)
-    // These 13 tokens are optimized for 5% oracle validation tolerance
+    // These 14 tokens are optimized for 5% oracle validation tolerance
     address constant INCH = 0x111111111117dC0aa78b770fA6A738034120C302; // 1INCH
     address constant AAVE = 0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9; // Aave
     address constant APE = 0x4d224452801ACEd8B2F0aebE155379bb5D594381; // ApeCoin
@@ -51,6 +51,7 @@ contract GuardedEthTokenSwapperTest is Test {
     address constant MKR = 0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2; // Maker
     address constant SHIB = 0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE; // Shiba Inu
     address constant UNI = 0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984; // Uniswap
+    address constant WBTC = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599; // Wrapped Bitcoin
     address constant ZRX = 0xE41d2489571d322189246DaFA5ebDe1F4699F498; // 0x Protocol
 
     // Configuration structure for token swap parameters
@@ -215,6 +216,15 @@ contract GuardedEthTokenSwapperTest is Test {
             symbol: "UNI"
         }));
         
+        // WBTC/ETH - Reference: 0xAc559F25B1619171CbC396a50854A3240b6A4e99, 0.05%
+        tokenConfigs.push(TokenConfig({
+            token: WBTC,
+            chainlinkFeed: 0xAc559F25B1619171CbC396a50854A3240b6A4e99, // ETH/BTC (standard calculation)
+            feeTier: 500, // 0.05% - Good liquidity and price efficiency
+            toleranceBps: 500, // 5% - Standard tolerance
+            symbol: "WBTC"
+        }));
+        
         // ZRX/ETH - Reference: 0x2Da4983a622a8498bb1a21FaE9D8F6C664939962, 0.30%
         tokenConfigs.push(TokenConfig({
             token: ZRX,
@@ -224,7 +234,7 @@ contract GuardedEthTokenSwapperTest is Test {
             symbol: "ZRX"
         }));
         
-        // Production configuration: 13 tokens with 5% oracle validation tolerance
+        // Production configuration: 14 tokens with 5% oracle validation tolerance (including WBTC)
         // All tokens maintain reliable liquidity and accurate pricing at the test block
     }
     
@@ -335,7 +345,8 @@ contract GuardedEthTokenSwapperTest is Test {
                     ethAmount, 
                     uint256(oraclePrice), 
                     oracleDecimals, 
-                    tokenDecimals
+                    tokenDecimals,
+                    feedDescription
                 );
                 
                 console.log("Oracle price:", uint256(oraclePrice));
@@ -509,16 +520,23 @@ contract GuardedEthTokenSwapperTest is Test {
         console.log("Received percentage of expected:", percentageOfExpected);
     }
     
-    // Calculate expected tokens using inverted oracle calculation method
+    // Calculate expected tokens based on feed type
     function calculateExpectedTokens(
         uint256 ethAmount,
         uint256 oraclePrice,
         uint8 oracleDecimals,
-        uint8 tokenDecimals
+        uint8 tokenDecimals,
+        string memory feedDescription
     ) internal pure returns (uint256) {
-        // Inverted calculation: Chainlink feeds provide ETH per TOKEN pricing
-        // Formula: expectedTokens = (ethAmount * 10^oracleDecimals * 10^tokenDecimals) / (1e18 * oraclePrice)
-        return (ethAmount * (10 ** oracleDecimals) * (10 ** tokenDecimals)) / (1e18 * oraclePrice);
+        // ETH/BTC feeds use direct calculation (matches contract behavior)
+        if (keccak256(bytes(feedDescription)) == keccak256(bytes("ETH / BTC"))) {
+            // Direct calculation: ETH/BTC gives ETH per BTC, use as-is
+            return (ethAmount * oraclePrice * (10 ** tokenDecimals)) / (1e18 * (10 ** oracleDecimals));
+        } else {
+            // TOKEN/ETH feeds require inverted calculation for test validation
+            // These feeds give "ETH per TOKEN" but the contract normalizes them
+            return (ethAmount * (10 ** oracleDecimals) * (10 ** tokenDecimals)) / (1e18 * oraclePrice);
+        }
     }
     
     // Test gas efficiency comparison

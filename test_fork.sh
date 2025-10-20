@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # GuardedEthTokenSwapper Fork Testing Script
-# CRITICAL: This script uses block 23620206 which is optimized for all 13 tokens
+# CRITICAL: This script uses block 23620206 which is optimized for all 14 tokens
 
 set -e
 
@@ -23,11 +23,11 @@ fi
 # Fork block - CRITICAL for test success
 FORK_BLOCK=23620206
 
-echo "🔗 Fork Block: $FORK_BLOCK (optimized for 13 tokens)"
+echo "🔗 Fork Block: $FORK_BLOCK (optimized for 14 tokens)"
 echo ""
 
 # Run the comprehensive test
-echo "🧪 Running comprehensive test for all 13 tokens..."
+echo "🧪 Running comprehensive test for all 14 tokens..."
 echo "   This test validates 5% oracle tolerance for each token"
 echo ""
 
@@ -41,7 +41,7 @@ echo ""
 echo "✅ Fork testing completed!"
 echo ""
 echo "📊 Test Summary:"
-echo "   • 13 production-ready tokens tested"
+echo "   • 14 production-ready tokens tested"
 echo "   • 5% oracle validation tolerance"
 echo "   • 100% success rate required"
 echo "   • Block $FORK_BLOCK (optimized liquidity)"

@@ -1,7 +1,7 @@
 /**
  * GuardedEthTokenSwapper - Production Token Configuration
  * 
- * This file defines the 13 production-ready ETH trading pairs that have been
+ * This file defines the 14 production-ready ETH trading pairs that have been
  * optimized and validated for 5% oracle tolerance at block 23620206.
  * 
  * All tokens use Chainlink TOKEN/ETH price feeds and optimal Uniswap V3 fee tiers.
@@ -104,13 +104,20 @@ export const productionPairs: TokenPair[] = [
     description: "0x Protocol - DEX infrastructure"
   },
 
-  // Stablecoin (0.05%) - Low volatility, high volume
+  // Major Assets (0.05%) - Low volatility, high volume
   {
     symbol: "USDT",
     pair: "USDT/ETH",
     chainlinkFeed: "0xEe9F2375b4bdF6387aa8265dD4FB8F16512A1d46",
     uniswapFeeTier: 500,
     description: "Tether USD - Leading stablecoin"
+  },
+  {
+    symbol: "WBTC",
+    pair: "WBTC/ETH", 
+    chainlinkFeed: "0xAc559F25B1619171CbC396a50854A3240b6A4e99",
+    uniswapFeeTier: 500,
+    description: "Wrapped Bitcoin - Uses ETH/BTC feed for optimal precision"
   }
 ];
 

@@ -76,7 +76,7 @@ Or run specific fork tests:
 # Test single token swap
 forge test --match-test testSwapEthForToken --fork-url $ETH_RPC_URL --fork-block-number 23620206 -vv
 
-# Test all 13 tokens (most comprehensive)
+# Test all 14 tokens (most comprehensive)
 forge test --match-test testSwapMultipleEthPairs --fork-url $ETH_RPC_URL --fork-block-number 23620206 -vv
 
 # Test specific contract only
@@ -91,7 +91,7 @@ forge test --match-test testSwapMultipleEthPairs --fork-url https://ethereum-rpc
 ### Fork Block 23620206
 
 **CRITICAL**: All fork testing must use block `23620206`. This block is specifically optimized for:
-- All 13 tokens have verified liquidity
+- All 14 tokens have verified liquidity
 - Oracle feeds are active and accurate
 - Uniswap V3 pools have optimal liquidity distribution
 - 5% oracle validation tolerance is achievable
@@ -108,10 +108,11 @@ Two convenience scripts are provided:
 
 ### Configured Tokens
 
-The test suite includes **13 production-ready ETH pairs** with 5% oracle validation tolerance:
+The test suite includes **14 production-ready ETH pairs** with 5% oracle validation tolerance:
 
-**Stablecoin (0.05% fee tier):**
+**Major Assets (0.05% fee tier):**
 - USDT - Tether USD (`0xEe9F2375b4bdF6387aa8265dD4FB8F16512A1d46`)
+- WBTC - Wrapped Bitcoin (`0xAc559F25B1619171CbC396a50854A3240b6A4e99`) - Uses ETH/BTC feed
 
 **Major DeFi Tokens (0.30% fee tier):**
 - AAVE - Aave Protocol (`0x6Df09E975c830ECae5bd4eD9d90f3A95a4f88012`)
@@ -139,7 +140,7 @@ The test suite includes **9 comprehensive test cases**:
    - Checks balance changes and event emission
 
 2. **`testSwapMultipleEthPairs()`**
-   - Tests all 13 configured tokens in sequence
+   - Tests all 14 configured tokens in sequence
    - Uses 0.1 ETH per swap with 15% slippage tolerance
    - Validates oracle pricing within 5% tolerance for each token
    - Most comprehensive integration test with 100% success rate requirement

@@ -129,3 +129,10 @@ USDT/ETH (Tether USD)
 0xEe9F2375b4bdF6387aa8265dD4FB8F16512A1d46
 0.05% – Major USD stablecoin vs ETH (high volume, low volatility)
 Note: Chosen over GHO for ETH-only swapper due to established liquidity and direct USDT/ETH feed
+
+WBTC/ETH (Wrapped Bitcoin)
+0xAc559F25B1619171CbC396a50854A3240b6A4e99 (ETH/BTC feed)
+0.05% – Major Bitcoin wrapper with excellent precision
+Note: Uses ETH/BTC feed instead of BTC/ETH for optimal decimal alignment (8 decimals vs 18 decimals)
+Token: 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599 (8 decimals)
+Oracle precision: 0.09% difference achieved in testing

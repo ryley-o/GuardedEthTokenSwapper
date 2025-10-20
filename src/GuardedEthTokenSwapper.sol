@@ -149,13 +149,12 @@ contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
         if (block.timestamp - tokUpdatedAt > MAX_ORACLE_STALENESS) revert OracleStale();
         uint256 tokEthPrice = uint256(tokEthAns);
 
-        // 2) Compute expected tokens - much simpler calculation!
+        // 2) Compute expected tokens - standard TOKEN/ETH calculation
         uint256 expectedTokens;
         {
             uint8 tokenDec = IERC20(token).decimals();
             // TOKEN/ETH price means: tokEthPrice * 10^decimalsCache = tokens per 1 ETH
             // For msg.value ETH: expectedTokens = msg.value * tokEthPrice * 10^tokenDec / (1e18 * 10^decimalsCache)
-            // Simplified: expectedTokens = msg.value * tokEthPrice * 10^tokenDec / (1e18 * 10^decimalsCache)
             
             // Use precision scaling to avoid early division
             uint256 scaledNumerator = msg.value * tokEthPrice * (10 ** tokenDec);

@@ -22,14 +22,14 @@ GuardedEthTokenSwapper is an ETH-only token swapper that protects against sandwi
 
 ## Supported Tokens
 
-The contract supports 13 production-ready ETH pairs with 5% oracle validation tolerance:
+The contract supports 14 production-ready ETH pairs with 5% oracle validation tolerance:
 
 - **DeFi Tokens**: 1INCH, AAVE, COMP, CRV, LDO, LINK, MKR, UNI
-- **Major Assets**: SHIB (Meme)
+- **Major Assets**: WBTC (Bitcoin), SHIB (Meme)
 - **Stablecoin**: USDT
 - **Other**: APE, BAT, ZRX
 
-All tokens use verified Chainlink TOKEN/ETH price feeds and optimal Uniswap V3 fee tiers, tested at block 23620206.
+All tokens use verified Chainlink TOKEN/ETH price feeds and optimal Uniswap V3 fee tiers, tested at block 23620206. WBTC uses the ETH/BTC feed for optimal precision.
 
 ## Architecture
 
@@ -96,8 +96,8 @@ See `test/GuardedEthTokenSwapper.t.sol` for complete configuration examples.
 ## Testing
 
 Comprehensive test suite includes:
-- Fork testing against mainnet at block 23620206 (optimized for all 13 tokens)
-- All 13 supported tokens with 5% oracle validation tolerance
+- Fork testing against mainnet at block 23620206 (optimized for all 14 tokens)
+- All 14 supported tokens with 5% oracle validation tolerance
 - Slippage validation, deadline checks, admin functions
 - Gas efficiency and security tests
 
