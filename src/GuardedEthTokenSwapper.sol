@@ -193,10 +193,7 @@ contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
         if (f.feeTier == 0) revert FeeNotSet();
 
         // 1) Read TOKEN/ETH price with staleness check
-        (, int256 tokEthAns,, uint256 tokUpdatedAt,) = AggregatorV3Interface(f.aggregator).latestRoundData();
-        if (tokEthAns <= 0) revert OracleBad();
-        if (block.timestamp - tokUpdatedAt > MAX_ORACLE_STALENESS) revert OracleStale();
-        uint256 tokEthPrice = uint256(tokEthAns);
+        uint256 tokEthPrice = _getValidatedPrice(f.aggregator);
 
         // 2) Compute expected tokens - standard TOKEN/ETH calculation
         uint256 expectedTokens;
@@ -253,6 +250,45 @@ contract GuardedEthTokenSwapper is Ownable, ReentrancyGuard {
     {
         FeedInfo memory x = feeds[token];
         return (x.aggregator, x.decimalsCache, x.feeTier, x.toleranceBps);
+    }
+
+    /**
+     * @notice Returns the current TOKEN/ETH price from the Chainlink oracle
+     * @param token The ERC20 token address to get the price for
+     * @return price The current price of the token in ETH (scaled by decimals)
+     * @return decimals The number of decimals in the price value
+     * @dev Reverts if the token is not configured or if the oracle data is stale (>24 hours)
+     * @dev Price represents how much ETH one token is worth. For example:
+     *      If LINK/ETH = 0.004 ETH (with 18 decimals), the function returns:
+     *      price = 4000000000000000, decimals = 18
+     *      Meaning 1 LINK = 0.004 ETH
+     */
+    function getTokenPrice(address token) external view returns (uint256 price, uint8 decimals) {
+        FeedInfo memory info = feeds[token];
+        if (info.aggregator == address(0)) revert FeedNotSet();
+
+        uint256 validatedPrice = _getValidatedPrice(info.aggregator);
+        return (validatedPrice, info.decimalsCache);
+    }
+
+    // --- Internal Helper Functions ---
+
+    /**
+     * @notice Fetches and validates price from a Chainlink oracle
+     * @param aggregator The Chainlink price feed address
+     * @return price The validated price from the oracle
+     * @dev Reverts with OracleBad if price <= 0
+     * @dev Reverts with OracleStale if data is older than MAX_ORACLE_STALENESS
+     */
+    function _getValidatedPrice(address aggregator) internal view returns (uint256 price) {
+        AggregatorV3Interface agg = AggregatorV3Interface(aggregator);
+        (, int256 answer,, uint256 updatedAt,) = agg.latestRoundData();
+
+        // Validate price data
+        if (answer <= 0) revert OracleBad();
+        if (block.timestamp - updatedAt > MAX_ORACLE_STALENESS) revert OracleStale();
+
+        return uint256(answer);
     }
 
     receive() external payable {

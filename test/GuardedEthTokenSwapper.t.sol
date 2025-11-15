@@ -621,9 +621,7 @@ contract GuardedEthTokenSwapperTest is Test {
         uint256 deadline = block.timestamp + 300;
 
         vm.expectRevert(GuardedEthTokenSwapper.InvalidSlippage.selector);
-        swapper.swapEthForToken{
-            value: 1 ether
-        }(
+        swapper.swapEthForToken{value: 1 ether}(
             LINK,
             10001, // > 100%
             deadline
@@ -636,9 +634,7 @@ contract GuardedEthTokenSwapperTest is Test {
         vm.startPrank(user);
 
         vm.expectRevert("deadline expired");
-        swapper.swapEthForToken{
-            value: 1 ether
-        }(
+        swapper.swapEthForToken{value: 1 ether}(
             LINK,
             200,
             block.timestamp - 1 // Past deadline

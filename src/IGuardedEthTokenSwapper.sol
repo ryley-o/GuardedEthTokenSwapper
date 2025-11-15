@@ -171,6 +171,31 @@ interface IGuardedEthTokenSwapper {
         returns (address aggregator, uint8 decimals, uint24 feeTier, uint16 toleranceBps);
 
     /**
+     * @notice Returns the current TOKEN/ETH price from the Chainlink oracle
+     * @param token The ERC20 token address to get the price for
+     * @return price The current price of the token in ETH (scaled by decimals)
+     * @return decimals The number of decimals in the price value
+     *
+     * @dev Reverts if the token is not configured (FeedNotSet error)
+     * @dev Reverts if the oracle data is stale - older than 24 hours (OracleStale error)
+     * @dev Reverts if the oracle returns invalid data (OracleBad error)
+     *
+     * Price Interpretation:
+     * - The price represents how much ETH one token is worth
+     * - Example: If LINK/ETH = 0.004 ETH (with 18 decimals):
+     *   - price = 4000000000000000 (4 * 10^15)
+     *   - decimals = 18
+     *   - Meaning: 1 LINK = 0.004 ETH
+     *
+     * Usage:
+     * ```solidity
+     * (uint256 price, uint8 decimals) = swapper.getTokenPrice(LINK_ADDRESS);
+     * // To convert to human-readable: actualPrice = price / (10 ** decimals)
+     * ```
+     */
+    function getTokenPrice(address token) external view returns (uint256 price, uint8 decimals);
+
+    /**
      * @notice Returns the Uniswap V3 Router address
      * @return The address of the Uniswap V3 SwapRouter
      */

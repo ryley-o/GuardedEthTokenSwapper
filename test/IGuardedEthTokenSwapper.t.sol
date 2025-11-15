@@ -53,6 +53,18 @@ contract IGuardedEthTokenSwapperTest is Test {
     }
 
     /**
+     * @notice Test that getTokenPrice function exists in the interface
+     * @dev Should revert for unconfigured token
+     */
+    function testInterfaceGetTokenPrice() public {
+        address unconfiguredToken = address(0x1234);
+
+        // Verify getTokenPrice exists (will revert because token not configured)
+        vm.expectRevert();
+        iSwapper.getTokenPrice(unconfiguredToken);
+    }
+
+    /**
      * @notice Test that the interface can be used with the contract
      * @dev The minimum deadline of 300 seconds is hardcoded in the contract logic
      */
