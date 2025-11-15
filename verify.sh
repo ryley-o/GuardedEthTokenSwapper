@@ -17,7 +17,7 @@ if [ -f .env ]; then
 fi
 
 # Contract details
-CONTRACT_ADDRESS="${1:-0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0}"
+CONTRACT_ADDRESS="${1:-0x7FFc0E3F2aC6ba73ada2063D3Ad8c5aF554ED05f}"
 CONTRACT_NAME="GuardedEthTokenSwapper"
 CONTRACT_PATH="src/GuardedEthTokenSwapper.sol:GuardedEthTokenSwapper"
 

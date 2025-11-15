@@ -6,7 +6,7 @@ import {GuardedEthTokenSwapper} from "../src/GuardedEthTokenSwapper.sol";
 
 /**
  * @title GuardedEthTokenSwapper Mainnet Integration Tests
- * @notice Tests the DEPLOYED contract on mainnet at 0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0
+ * @notice Tests the DEPLOYED contract on mainnet at 0x7FFc0E3F2aC6ba73ada2063D3Ad8c5aF554ED05f
  * @dev These tests verify:
  *      1. Admin has properly configured all 14 tokens
  *      2. Oracle price feeds are working correctly
@@ -20,7 +20,7 @@ import {GuardedEthTokenSwapper} from "../src/GuardedEthTokenSwapper.sol";
  */
 contract GuardedEthTokenSwapperMainnetTest is Test {
     // Deployed contract address on Ethereum mainnet
-    address constant DEPLOYED_CONTRACT = 0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0;
+    address constant DEPLOYED_CONTRACT = 0x7FFc0E3F2aC6ba73ada2063D3Ad8c5aF554ED05f;
 
     GuardedEthTokenSwapper public swapper;
     address public user = address(0x999);

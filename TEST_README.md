@@ -3,7 +3,7 @@
 ## 🌐 Mainnet Deployment
 
 **The contract is deployed and verified on Ethereum mainnet:**
-- **Address:** [`0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0`](https://etherscan.io/address/0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0)
+- **Address:** [`0x7FFc0E3F2aC6ba73ada2063D3Ad8c5aF554ED05f`](https://etherscan.io/address/0x7FFc0E3F2aC6ba73ada2063D3Ad8c5aF554ED05f)
 - **Status:** Production-ready, fully configured with 14 tokens
 - **Verification:** Source code verified on Etherscan
 - **Testing:** Continuous mainnet integration testing
@@ -79,7 +79,7 @@ ETH_RPC_URL="https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY" ./test_fork.sh
    - Best for: Ongoing monitoring and updates
 
 4. **Mainnet Integration Tests (`./test_mainnet.sh`)** ⭐ NEW
-   - Tests the DEPLOYED contract at `0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0`
+   - Tests the DEPLOYED contract at `0x7FFc0E3F2aC6ba73ada2063D3Ad8c5aF554ED05f`
    - Validates admin configuration
    - Tests real oracle feeds on mainnet
    - Executes actual swaps against deployed contract

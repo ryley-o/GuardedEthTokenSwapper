@@ -7,7 +7,7 @@ pragma solidity ^0.8.30;
  * @dev Interface for swapping ETH to ERC20 tokens with Chainlink oracle price validation
  *
  * The GuardedEthTokenSwapper is deployed on Ethereum mainnet at:
- * 0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0
+ * 0x7FFc0E3F2aC6ba73ada2063D3Ad8c5aF554ED05f
  *
  * Features:
  * - Swap ETH for 14 supported ERC20 tokens

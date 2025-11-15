@@ -4,7 +4,7 @@
 
 **The GuardedEthTokenSwapper is already deployed and production-ready on Ethereum mainnet:**
 
-- **Contract Address:** [`0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0`](https://etherscan.io/address/0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0)
+- **Contract Address:** [`0x7FFc0E3F2aC6ba73ada2063D3Ad8c5aF554ED05f`](https://etherscan.io/address/0x7FFc0E3F2aC6ba73ada2063D3Ad8c5aF554ED05f)
 - **Network:** Ethereum Mainnet (Chain ID: 1)
 - **Deployment Block:** 23621778
 - **Owner:** `0x99E5B0c5ffae6e177848d8FDe593B539A35Be56D`
@@ -15,7 +15,7 @@
 - Standard (0.30%): AAVE, APE, BAT, COMP, CRV, LDO, LINK, MKR, UNI, ZRX
 - Higher Fee (1.00%): 1INCH, SHIB
 
-**View on Etherscan:** [Contract Source Code](https://etherscan.io/address/0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0#code)
+**View on Etherscan:** [Contract Source Code](https://etherscan.io/address/0x7FFc0E3F2aC6ba73ada2063D3Ad8c5aF554ED05f#code)
 
 **Mainnet Integration Tests:** Run `./test_mainnet.sh` to validate the deployed contract.
 

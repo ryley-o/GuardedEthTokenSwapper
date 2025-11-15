@@ -14,13 +14,13 @@ GuardedEthTokenSwapper is an ETH-only token swapper that protects against sandwi
 
 **The contract is deployed and production-ready on Ethereum mainnet:**
 
-- **Contract Address:** [`0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0`](https://etherscan.io/address/0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0)
+- **Contract Address:** [`0x7FFc0E3F2aC6ba73ada2063D3Ad8c5aF554ED05f`](https://etherscan.io/address/0x7FFc0E3F2aC6ba73ada2063D3Ad8c5aF554ED05f)
 - **Network:** Ethereum Mainnet (Chain ID: 1)
 - **Status:** ✅ Verified source code on Etherscan
 - **Tokens:** 14 pre-configured with optimal fee tiers
 - **Testing:** Continuous mainnet integration testing via CI
 
-**View on Etherscan:** [Contract Source & Interactions](https://etherscan.io/address/0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0#code)
+**View on Etherscan:** [Contract Source & Interactions](https://etherscan.io/address/0x7FFc0E3F2aC6ba73ada2063D3Ad8c5aF554ED05f#code)
 
 ## Features
 
@@ -106,7 +106,7 @@ forge build
 1. `./test_quick.sh` - Fast development testing (no fork, no RPC needed)
 2. `./test_fork.sh` - Validation against known-good state (block 23620206)
 3. `./test_fork_latest.sh` - Test current mainnet compatibility
-4. `./test_mainnet.sh` ⭐ - **Test the deployed contract at `0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0`**
+4. `./test_mainnet.sh` ⭐ - **Test the deployed contract at `0x7FFc0E3F2aC6ba73ada2063D3Ad8c5aF554ED05f`**
 
 **Mainnet Integration Tests:**
 The mainnet integration tests validate the actual deployed contract:
@@ -117,7 +117,7 @@ The mainnet integration tests validate the actual deployed contract:
 
 ### Deploy
 
-**✅ The contract is already deployed to mainnet at [`0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0`](https://etherscan.io/address/0x96E6a25565E998C6EcB98a59CC87F7Fc5Ed4D7b0).**
+**✅ The contract is already deployed to mainnet at [`0x7FFc0E3F2aC6ba73ada2063D3Ad8c5aF554ED05f`](https://etherscan.io/address/0x7FFc0E3F2aC6ba73ada2063D3Ad8c5aF554ED05f).**
 
 For deploying your own instance, see [DEPLOYMENT.md](DEPLOYMENT.md) for the comprehensive guide.
 
